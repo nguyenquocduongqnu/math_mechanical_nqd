@@ -1,0 +1,12 @@
+loguru
+numpy
+pandas
+scikit-learn
+tensorflow>=2.0
+torch
+bandit
+black
+flake8
+networkx
+pre-commit
+pytest
