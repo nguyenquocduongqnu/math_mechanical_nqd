@@ -10,3 +10,6 @@ flake8
 networkx
 pre-commit
 pytest
+FrEIA
+POT
+scipy

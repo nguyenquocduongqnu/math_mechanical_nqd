@@ -1,22 +1,16 @@
 import argparse
 import os
-import random
 import sys
 from typing import Any
-import torch
 import numpy as np
 import pandas as pd
 from signal import SIGINT, signal
-from sklearn.preprocessing import StandardScaler
 import tensorflow.compat.v1 as tf
-import networkx as nx
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__ ),'miracle')))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__ ),'tests')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__ ),'compare_methods')))
 
-# miracle absolute
-from miracle.MIRACLE import MIRACLE
-from miracle.compare_methods import load_imputer
+# methods absolute
+from compare_methods import load_imputer
 
 tf.disable_v2_behavior()
 np.set_printoptions(suppress=True)
@@ -41,22 +35,22 @@ def binary_sampler(p: float, rows: int, cols: int) -> np.ndarray:
     binary_random_matrix = 1 * (unif_random_matrix < p)
     return binary_random_matrix
 
+def rmse_loss(ori_data: np.ndarray, imputed_data: np.ndarray, data_m: np.ndarray) -> np.ndarray:
+    numerator = np.sum(((1 - data_m) * ori_data - (1 - data_m) * imputed_data) ** 2)
+    denominator = np.sum(1 - data_m)
+    return np.sqrt(numerator / float(denominator))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--reg_lambda", type=float, default=0.1)
-    parser.add_argument("--reg_beta", type=float, default=0.1)
     parser.add_argument("--gpu", type=str, default="")
-    parser.add_argument("--ckpt_file", type=str, default="tmp.ckpt")
-    parser.add_argument("--window", type=int, default=10)
-    parser.add_argument("--max_steps", type=int, default=400)
     parser.add_argument("--missingness", type=float, default=0.2)
     args = parser.parse_args()
     signal(SIGINT, handler)
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
-    data = pd.read_csv(r'test_dataset_prob_dl_no_null.csv').drop(['Unnamed: 0'], axis=1).drop(['Output'], axis=1)
+    data = pd.read_csv(r'data/test_dataset_prob_dl_no_null.csv').drop(['Unnamed: 0'], axis=1).drop(['Output'], axis=1)
     df = data.sample(frac=1).reset_index(drop=True)
     print(df.head())
     #
@@ -100,31 +94,15 @@ if __name__ == "__main__":
     seed_imputer_knn = load_imputer("knn")
     X_seed_imputer_knn = seed_imputer_knn.fit_transform(X_MISSING)
 
-    # Initialize MIRACLE
-    miracle = MIRACLE(
-        num_inputs=X_MISSING.shape[1],
-        reg_lambda=args.reg_lambda,
-        reg_beta=args.reg_beta,
-        n_hidden=32,
-        ckpt_file=args.ckpt_file,
-        missing_list=missing_idxs,
-        reg_m=0.1,
-        lr=0.0001,
-        window=args.window,
-        max_steps=args.max_steps,
-    )
+    seed_imputer_miracle = load_imputer("miracle")
+    ob_imputer_miracle = seed_imputer_miracle.MIRACLEImputation(num_inputs=X_MISSING.shape[1],missing_list=missing_idxs)
+    X_seed_imputer_miracle = ob_imputer_miracle.fit(X_missing=X_MISSING, X_seed=X_seed_imputer_mean, early_stopping=False)
 
-    # Train MIRACLE
-    miracle_imputed_data_x = miracle.fit(
-        X_MISSING,
-        X_seed=X_seed_imputer_mean,
-    )
-
-    print(f"RMSE of MEAN: {miracle.rmse_loss(X_TRUTH, X_seed_imputer_mean, X_MASK)}")
-    print(f"RMSE of KNN: {miracle.rmse_loss(X_TRUTH, X_seed_imputer_knn, X_MASK)}")
-    print(f"RMSE of MICE: {miracle.rmse_loss(X_TRUTH, X_seed_imputer_mice, X_MASK)}")
-    print(f"RMSE of GAIN: {miracle.rmse_loss(X_TRUTH, X_seed_imputer_gain, X_MASK)}")
-    print(f"RMSE of MISSFOREST: {miracle.rmse_loss(X_TRUTH, X_seed_imputer_missforest, X_MASK)}")
-    print(f"RMSE of MIRACLE:  {miracle.rmse_loss(X_TRUTH, miracle_imputed_data_x, X_MASK)}")
+    print(f"RMSE of MEAN: {rmse_loss(X_TRUTH, X_seed_imputer_mean, X_MASK)}")
+    print(f"RMSE of KNN: {rmse_loss(X_TRUTH, X_seed_imputer_knn, X_MASK)}")
+    print(f"RMSE of MICE: {rmse_loss(X_TRUTH, X_seed_imputer_mice, X_MASK)}")
+    print(f"RMSE of GAIN: {rmse_loss(X_TRUTH, X_seed_imputer_gain, X_MASK)}")
+    print(f"RMSE of MISSFOREST: {rmse_loss(X_TRUTH, X_seed_imputer_missforest, X_MASK)}")
+    print(f"RMSE of MIRACLE:  {rmse_loss(X_TRUTH, X_seed_imputer_miracle, X_MASK)}")
     print(X_seed_imputer_missforest)
 

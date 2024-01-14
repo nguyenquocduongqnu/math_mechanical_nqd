@@ -1,8 +1,5 @@
-# stdlib
 import random
 from typing import Optional
-
-# third party
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error
@@ -13,7 +10,7 @@ tf.disable_v2_behavior()
 np.set_printoptions(linewidth=np.inf)
 
 
-class MIRACLE(object):
+class MIRACLEImputation(object):
     def __init__(
         self,
         lr: float = 0.001,
@@ -28,7 +25,7 @@ class MIRACLE(object):
         missing_list: list = list(range(1)),
         reg_m: float = 1.0,
         window: int = 10,
-        max_steps: int = 400,
+        max_steps: int = 500,
         random_seed: int = 0,
     ):
         tf.random.set_random_seed(random_seed)
@@ -301,15 +298,6 @@ class MIRACLE(object):
     ) -> np.ndarray:
         X = X_missing.copy()
         num_nodes = np.shape(X_missing)[1]
-
-        print(
-            f"""Using hyperparameters
-            reg_lambda = {self.reg_lambda},
-            reg_beta = {self.reg_beta},
-            reg_m = {self.reg_m}, lr = {self.learning_rate}
-            """
-        )
-
         rho_i = np.array([[1]])
         alpha_i = np.array([[1.0]])
         best_loss = 1e9
@@ -354,7 +342,6 @@ class MIRACLE(object):
                     self.noise: 0,
                 },
             )
-            # print(f"Step {step}, Loss= " + f"{loss:.4f}, h_value: {h_value}")
 
             idxs = np.arange(X.shape[0])
             random.shuffle(idxs)
@@ -432,13 +419,6 @@ class MIRACLE(object):
         )
 
         return transformed[:, : X_missing.shape[1]]
-
-    def rmse_loss(
-        self, ori_data: np.ndarray, imputed_data: np.ndarray, data_m: np.ndarray
-    ) -> np.ndarray:
-        numerator = np.sum(((1 - data_m) * ori_data - (1 - data_m) * imputed_data) ** 2)
-        denominator = np.sum(1 - data_m)
-        return np.sqrt(numerator / float(denominator))
 
     def _transform(self, X: np.ndarray) -> np.ndarray:
         return self.sess.run(
