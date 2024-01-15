@@ -1,13 +1,11 @@
-# stdlib
+"""Stekhoven, Daniel J., and Peter Bühlmann. "MissForest—non-parametric missing value imputation for mixed-type data." Bioinformatics 28.1 (2012): 112-118."""
+
 import time
 from typing import Any, Union
-
-# third party
 import numpy as np
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.experimental import enable_iterative_imputer  # noqa: F401,E402
 from sklearn.impute import IterativeImputer
-
 
 class MissForestImputation:
     """Imputation plugin for completing missing values using the MissForest strategy.

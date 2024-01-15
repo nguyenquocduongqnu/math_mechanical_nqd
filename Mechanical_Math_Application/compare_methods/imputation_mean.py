@@ -1,4 +1,5 @@
-# stdlib
+"""Mean value imputation"""
+
 from typing import Any
 
 # third party

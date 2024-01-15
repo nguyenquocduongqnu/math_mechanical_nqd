@@ -1,3 +1,5 @@
+"""Azur, Melissa J., et al. "Multiple imputation by chained equations: what is it and how does it work?." International journal of methods in psychiatric research 20.1 (2011): 40-49."""
+
 import time
 from typing import Any, Union
 import numpy as np

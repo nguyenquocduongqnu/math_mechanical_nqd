@@ -1,3 +1,8 @@
+"""
+Yoon, Jinsung, James Jordon, and Mihaela Schaar. "Gain: Missing data imputation using generative adversarial nets." International conference on machine learning. PMLR, 2018.
+"""
+
+
 from typing import Tuple, Union
 
 import numpy as np
@@ -6,9 +11,7 @@ import torch
 from torch import nn
 
 EPS = 1e-8
-
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 def sample_Z(m: int, n: int) -> np.ndarray:
     """Random sample generator for Z.

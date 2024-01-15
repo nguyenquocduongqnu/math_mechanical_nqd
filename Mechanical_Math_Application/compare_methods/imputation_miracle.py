@@ -1,3 +1,5 @@
+"""Kyono, Trent, et al. "Miracle: Causally-aware imputation via learning missing data mechanisms." Advances in Neural Information Processing Systems 34 (2021): 23806-23817."""
+
 import random
 from typing import Optional
 import numpy as np
