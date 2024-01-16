@@ -10,8 +10,6 @@ import torch
 import torch.nn as nn
 from scipy import optimize
 
-
-
 def nanmean(v, *args, **kwargs):
     """
     A Pytorch version on Numpy's nanmean
@@ -22,7 +20,6 @@ def nanmean(v, *args, **kwargs):
     return v.sum(*args, **kwargs) / (~is_nan).float().sum(*args, **kwargs)
 
 
-#### Quantile ######
 def quantile(X, q, dim=None):
     """
     Returns the q-th quantile.
@@ -401,7 +398,7 @@ def generate_mask(X_true, missing_prop, mask_type=['MAR', 'MNARL', 'MNARQ', 'MCA
     return mask.cpu().numpy()
 
 def run_TDM(X_missing, X_true=None):
-    niter = 1000
+    niter = 3000
     batchsize = 64
     lr = 1e-2
     report_interval = 100
@@ -434,41 +431,11 @@ def run_TDM(X_missing, X_true=None):
         projector.append(Fm.RNVPCouplingBlock, subnet_constructor=subnet_fc)
 
     imputer = TDM(projector, batchsize=batchsize, im_lr=lr, proj_lr=lr, niter=niter)
-    imp, maes, rmses = imputer.fit_transform(X_missing.clone(), verbose=True, report_interval=report_interval,
-                                             X_true=X_true)
-    print(imp)
-    print(rmses)
+    imp, maes, rmses = imputer.fit_transform(X_missing.clone(), verbose=True, report_interval=report_interval,X_true=X_true)
 
-    #
-    #
-    # imp = imp.detach()
-    #
-    # result = {}
-    # result["imp"] = imp[mask.bool()].detach().cpu().numpy()
-    # if X_true is not None:
-    #     result['learning_MAEs'] = maes
-    #     result['learning_RMSEs'] = rmses
-    #     result['MAE'] = MAE(imp, X_true, mask).item()
-    #     result['RMSE'] = RMSE(imp, X_true, mask).item()
-    #     OTLIM = 5000
-    #     M = mask.sum(1) > 0
-    #     nimp = M.sum().item()
-    #     if nimp < OTLIM:
-    #         M = mask.sum(1) > 0
-    #         nimp = M.sum().item()
-    #         dists = ((imp[M][:, None] - X_true[M]) ** 2).sum(2) / 2.
-    #         result['OT'] = ot.emd2(np.ones(nimp) / nimp,
-    #                                np.ones(nimp) / nimp, \
-    #                                dists.cpu().numpy())
-    #         logging.info(
-    #             f"MAE: {result['MAE']:.4f}\t"
-    #             f"RMSE: {result['RMSE']:.4f}\t"
-    #             f"OT: {result['OT']:.4f}")
-    #     else:
-    #         logging.info(
-    #             f"MAE: {result['MAE']:.4f}\t"
-    #             f"RMSE: {result['RMSE']:.4f}\t")
-    #
+    imp = imp.detach()
+
+    return imp
 
 class TDM():
 
@@ -605,16 +572,7 @@ class TDM():
 
 
 
-# For testing
-
-missing_prop = 0.3
-missing_type = 'MCAR' # Choosing from MAR, MNARL, MNARQ, MCAR
-data = pd.read_csv(r'D:\Math_Mechanical\math_mechanical_nqd\Mechanical_Math_Application\data\test_dataset_prob_dl_no_null.csv').drop(['Unnamed: 0'], axis=1).drop(['Output'], axis=1)
-df = data.to_numpy()
-X_true = df
-mask = generate_mask(X_true, missing_prop, missing_type)
-X_missing = np.copy(X_true)
-X_missing[mask.astype(bool)] = np.nan
-
-
-run_TDM(X_missing, X_true)
+def imputationTDM(X_MISSING, X_TRUTH):
+    X_MISSING_np = X_MISSING.to_numpy()
+    X_TRUTH_np = X_TRUTH.to_numpy()
+    return run_TDM(X_MISSING_np, X_TRUTH_np)

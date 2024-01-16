@@ -12,6 +12,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__ ),'compare
 # methods absolute
 from compare_methods import load_imputer
 
+
 tf.disable_v2_behavior()
 np.set_printoptions(suppress=True)
 
@@ -50,7 +51,7 @@ if __name__ == "__main__":
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
-    data = pd.read_csv(r'data/test_dataset_prob_dl_no_null.csv').drop(['Unnamed: 0'], axis=1).drop(['Output'], axis=1)
+    data = pd.read_csv("dataset/test_dataset_prob_dl_no_null.csv").drop(['Unnamed: 0'], axis=1).drop(['Output'], axis=1)
     df = data.sample(frac=1).reset_index(drop=True)
     print(df.head())
     #
@@ -67,14 +68,6 @@ if __name__ == "__main__":
     datasize = X_MISSING.shape[0]
     missingness = args.missingness
     feature_dims = X_MISSING.shape[1]
-
-    print(
-        f"""
-        Datasize = {datasize}
-        Missingness = {missingness}
-        NumFeats =  {feature_dims}
-        """
-    )
 
     # Append indicator variables - One indicator per feature with missing values.
     missing_idxs = np.where(np.any(np.isnan(X_MISSING), axis=0))[0]
@@ -98,11 +91,15 @@ if __name__ == "__main__":
     ob_imputer_miracle = seed_imputer_miracle.MIRACLEImputation(num_inputs=X_MISSING.shape[1],missing_list=missing_idxs)
     X_seed_imputer_miracle = ob_imputer_miracle.fit(X_missing=X_MISSING, X_seed=X_seed_imputer_mean, early_stopping=False)
 
+    from debug_mergecoce import imputationTDM
+    X_seed_imputer_TDM = imputationTDM(X_MISSING, X_TRUTH)
+
+
     print(f"RMSE of MEAN: {rmse_loss(X_TRUTH, X_seed_imputer_mean, X_MASK)}")
     print(f"RMSE of KNN: {rmse_loss(X_TRUTH, X_seed_imputer_knn, X_MASK)}")
     print(f"RMSE of MICE: {rmse_loss(X_TRUTH, X_seed_imputer_mice, X_MASK)}")
     print(f"RMSE of GAIN: {rmse_loss(X_TRUTH, X_seed_imputer_gain, X_MASK)}")
     print(f"RMSE of MISSFOREST: {rmse_loss(X_TRUTH, X_seed_imputer_missforest, X_MASK)}")
     print(f"RMSE of MIRACLE:  {rmse_loss(X_TRUTH, X_seed_imputer_miracle, X_MASK)}")
-    print(X_seed_imputer_missforest)
+    print(f"RMSE of TDM:  {rmse_loss(X_TRUTH, X_seed_imputer_TDM.numpy(), X_MASK)}")
 
